@@ -40,12 +40,6 @@ public class Entity {
 
     }
 
-    public Entity() {
-        this.x = 300;
-        this.y = 300;
-        this.size = 30;
-    }
-
     public double getCenterX() {
         return this.x - (size / 2);
     }

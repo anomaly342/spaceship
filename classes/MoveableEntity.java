@@ -16,13 +16,6 @@ public class MoveableEntity extends Entity {
         updateDelta();
     }
 
-    public MoveableEntity(int speed) {
-        super();
-        this.speed = speed;
-        updateDelta();
-
-    }
-
     public double getDeltaX() {
         return this.deltaX;
     }
