@@ -409,9 +409,10 @@ public class GameEngine extends JPanel implements KeyListener {
             intervalBetweenEnemeyShips = 750;
             enemyShipTimeLapsed = 0;
             destroyedAsteroid = 0;
-            quota = 4;
+            quota = 3;
             totalScore = 0;
             overallDamage = 1.0;
+            timeElapsed = 0;
             player = new Ship(600, 600, 12, Math.PI / 2, 150, "./assets/ships/player_ship.png", 300, 24, 5, 0,
                     "player");
         }
