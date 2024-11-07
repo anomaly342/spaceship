@@ -1,5 +1,5 @@
 package interfaces;
 
 public interface Attackable {
-    public void inflictDamage(Object obj);
+    public boolean inflictDamage(Object obj);
 }

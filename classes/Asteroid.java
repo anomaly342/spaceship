@@ -8,8 +8,8 @@ public class Asteroid extends MoveableEntity implements Attackable, Vulnerable {
     private int health;
     private int attack;
 
-    public Asteroid(int x, int y, int speed, int size, String url, int maxHealth, int attack) {
-        super(x, y, speed, size, url);
+    public Asteroid(int x, int y, double speed, double angle, int size, String url, int maxHealth, int attack) {
+        super(x, y, speed, size, url, angle);
         this.maxHealth = maxHealth;
         this.health = maxHealth;
         this.attack = attack;
@@ -38,10 +38,15 @@ public class Asteroid extends MoveableEntity implements Attackable, Vulnerable {
     }
 
     @Override
-    public void inflictDamage(Object obj) {
-        if (obj instanceof Vulnerable) {
-            ((Vulnerable) obj).receiveDamage(attack);
+    public boolean inflictDamage(Object obj) {
+        if (obj instanceof Ship) {
+            if (((Ship) obj).getTeam() == "player") {
+                ((Vulnerable) obj).receiveDamage(attack);
+                return true;
+            }
         }
+
+        return false;
     }
 
     @Override

@@ -4,9 +4,9 @@ import java.util.Random;
 
 public class Powerboost extends Entity {
     static public String generateRandomBoost() {
-        String[] list = { "reducedCooldown", "medicine", "increasedDamage" };
+        String[] list = { "reducedCooldown", "medicine", "increasedDamage", "increasedProjectileSpeed" };
 
-        int rand = new Random().nextInt((2 - 0) + 1) + 0;
+        int rand = new Random().nextInt(list.length);
 
         return list[rand];
 

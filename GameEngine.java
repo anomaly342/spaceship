@@ -3,11 +3,9 @@ import javax.swing.*;
 
 import classes.Asteroid;
 import classes.Entity;
-import classes.MoveableEntity;
 import classes.Projectile;
 import classes.Ship;
 import classes.Powerboost;
-import interfaces.Vulnerable;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -21,19 +19,22 @@ import java.util.Random;
 import java.util.Set;
 
 public class GameEngine extends JPanel implements KeyListener {
-    private Ship player = new Ship(600, 600, 12, 150, "./assets/ships/player_ship.png", 300);
+    private Ship player = new Ship(600, 600, 12, Math.PI / 2, 150, "./assets/ships/player_ship.png", 300, 24, 5, 0,
+            "player");
     private Set<Integer> activeKeys = new HashSet<>();
     private Random randomNumberGenerator;
-    private ArrayList<Projectile> playerProjectiles;
+
+    private ArrayList<Projectile> projectiles;
     private ArrayList<Asteroid> asteroids;
     private ArrayList<Powerboost> powerboosts;
+    private ArrayList<Ship> enemyShips;
 
-    private int intervalBetweenAsteroid = 200;
-    private int intervalBetweenPlayerProjectile = 24;
+    private int intervalBetweenAsteroid = 225;
     private int asteroidTimeLapsed = 0;
-    private int playerProjectileCooldown = 0;
+    private int intervalBetweenEnemeyShips = 750;
+    private int enemyShipTimeLapsed = 0;
     private int destroyedAsteroid = 0;
-    private int quota = 4;
+    private int quota = 3;
     private int totalScore = 0;
     private double overallDamage = 1.0;
 
@@ -43,9 +44,10 @@ public class GameEngine extends JPanel implements KeyListener {
 
     public GameEngine() {
         randomNumberGenerator = new Random();
-        playerProjectiles = new ArrayList<Projectile>();
+        projectiles = new ArrayList<Projectile>();
         asteroids = new ArrayList<Asteroid>();
         powerboosts = new ArrayList<Powerboost>();
+        enemyShips = new ArrayList<Ship>();
 
         try {
             playingImage = ImageIO.read(new File("./assets/backgrounds/playing.jpg"));
@@ -76,44 +78,114 @@ public class GameEngine extends JPanel implements KeyListener {
                     player.moveForward();
                 }
                 if (activeKeys.contains(KeyEvent.VK_S) && player.getY() + player.getSize() / 3 < getHeight()) {
-                    player.moveBackward();
+                    player.moveDown();
                 }
                 if (activeKeys.contains(KeyEvent.VK_SPACE)
-                        && playerProjectileCooldown > intervalBetweenPlayerProjectile) {
-                    playerProjectiles
-                            .add(new Projectile(player.getX(), player.getY() - player.getSize() / 2, 5, 50,
+                        && player.getIntervalBetweenProjectiles() <= player.getProjectileCooldown()) {
+                    projectiles
+                            .add(new Projectile(player.getX(), player.getY() - player.getSize() / 2,
+                                    player.getBaseProjectileSpeed(), Math.PI / 2, 50,
                                     "./assets/projectiles/projectile3.png", (int) (66 * overallDamage), "player"));
-                    playerProjectileCooldown = 0;
-                }
-
-                if (destroyedAsteroid == quota) {
-                    destroyedAsteroid = 0;
-                }
-
-                // Spawn an asteroid every 200 tick
-                if (asteroidTimeLapsed % intervalBetweenAsteroid == 0 && asteroidTimeLapsed != 0) {
-
-                    int rand = randomNumberGenerator.nextInt((getWidth() - 45 - 45 + 1)) + 45;
-                    int rand_index = randomNumberGenerator.nextInt(2) + 1;
-                    int speed = 7 - (intervalBetweenAsteroid / 40);
-                    if (asteroids.size() < 22) {
-                        asteroids.add(new Asteroid(rand, 50, speed, 110,
-                                "./assets/asteroids/asteroid" + rand_index + ".png", 300, 100));
-                    }
-                    intervalBetweenAsteroid -= 2;
-                    if (intervalBetweenAsteroid < 2) {
-                        intervalBetweenAsteroid = 2;
-                    }
-                    asteroidTimeLapsed = 0;
+                    player.resetProjectileCooldown();
 
                 }
-                // Move forward asteroids and remove ones that are out of bound.
+
                 if (player.getHealth() > 0) {
+                    // Spawn a ship every specified tick
+                    if (enemyShipTimeLapsed % intervalBetweenEnemeyShips == 0 && enemyShipTimeLapsed != 0) {
 
+                        int rand = randomNumberGenerator.nextInt((getWidth() - 45 - 45 + 1)) + 45;
+
+                        if (enemyShips.size() < 10) {
+
+                            enemyShips.add(
+                                    new Ship(rand, 0, 1, Math.PI / 2, 90, "./assets/ships/enemy_ship.png",
+                                            250, 37, 5, 0,
+                                            "enemy"));
+                        }
+
+                        intervalBetweenEnemeyShips -= 8;
+                        if (intervalBetweenEnemeyShips < 40) {
+                            intervalBetweenEnemeyShips = 40;
+                        }
+                        enemyShipTimeLapsed = 0;
+
+                    }
+
+                    // Spawn an asteroid every specified tick
+                    if (asteroidTimeLapsed % intervalBetweenAsteroid == 0 && asteroidTimeLapsed != 0) {
+
+                        int rand = randomNumberGenerator.nextInt((getWidth() - 45 - 45 + 1)) + 45;
+                        int rand_index = randomNumberGenerator.nextInt(2) + 1;
+                        int speed = 14 - (intervalBetweenAsteroid / 20);
+                        if (asteroids.size() < 16) {
+                            asteroids.add(new Asteroid(rand, 50, speed, 90.0, 110,
+                                    "./assets/asteroids/asteroid" + rand_index + ".png", 230, 100));
+                        }
+                        intervalBetweenAsteroid -= 1;
+                        if (intervalBetweenAsteroid < 12) {
+                            intervalBetweenAsteroid = 12;
+                        }
+                        asteroidTimeLapsed = 0;
+
+                    }
+
+                    // Check enemy ship is out of health or colides with player ship
+                    // If neiher of above applies, then make it shoot out projectiles
+                    int enemyShipSize = enemyShips.size();
+                    for (int j = 0; j < enemyShipSize; j++) {
+                        Ship currEnemyShip = enemyShips.get(j);
+                        currEnemyShip.moveDown();
+                        if (!currEnemyShip.isAlive()) {
+                            enemyShips.remove(j);
+                            enemyShipSize--;
+                            j--;
+                            destroyedAsteroid += 2;
+                            totalScore += 5;
+
+                        } else if (Entity.collides(currEnemyShip, player)) {
+                            player.receiveDamage(150);
+                            enemyShips.remove(j);
+                            enemyShipSize--;
+                            j--;
+                            destroyedAsteroid += 2;
+                            totalScore += 5;
+
+                        } else {
+                            if (currEnemyShip.getIntervalBetweenProjectiles() <= currEnemyShip
+                                    .getProjectileCooldown()) {
+                                double deltaX = player.getX() - currEnemyShip.getX();
+                                double deltaY = (currEnemyShip.getY() - player.getY());
+                                double angle = Math.atan2(deltaY, deltaX);
+
+                                System.out.println(angle);
+                                projectiles
+                                        .add(new Projectile(currEnemyShip.getX(),
+                                                currEnemyShip.getY() + currEnemyShip.getSize() / 2,
+                                                currEnemyShip.getBaseProjectileSpeed(), angle, 50,
+                                                "./assets/projectiles/projectile2.png", 40,
+                                                "enemy"));
+                                currEnemyShip.resetProjectileCooldown();
+                            } else {
+                                currEnemyShip.incrementProjectileCooldown();
+                            }
+
+                        }
+
+                        if (destroyedAsteroid >= quota) {
+                            String randString = Powerboost.generateRandomBoost();
+                            powerboosts.add(new Powerboost(currEnemyShip.getX(), currEnemyShip.getY(), 60,
+                                    "./assets/powerboosts/" + randString + ".png", randString));
+                            destroyedAsteroid -= quota;
+                        }
+
+                    }
+                    // Move forward asteroids and remove ones that are out of bound or out of
+                    // health.
                     int asteroidsSize = asteroids.size();
                     for (int j = 0; j < asteroidsSize; j++) {
                         Asteroid currAsteroid = asteroids.get(j);
-                        currAsteroid.moveBackward();
+                        currAsteroid.moveDown();
 
                         if (currAsteroid.getY() > getHeight()) {
                             asteroids.remove(j);
@@ -127,11 +199,6 @@ public class GameEngine extends JPanel implements KeyListener {
                             j--;
                             destroyedAsteroid++;
                             totalScore++;
-                            if (destroyedAsteroid == quota) {
-                                String randString = Powerboost.generateRandomBoost();
-                                powerboosts.add(new Powerboost(currAsteroid.getX(), currAsteroid.getY(), 60,
-                                        "./assets/powerboosts/" + randString + ".png", randString));
-                            }
 
                         } else if (Entity.collides(currAsteroid, player)) {
                             currAsteroid.inflictDamage(player);
@@ -140,30 +207,34 @@ public class GameEngine extends JPanel implements KeyListener {
                             j--;
                             destroyedAsteroid++;
                             totalScore++;
-                            if (destroyedAsteroid == quota) {
-                                String randString = Powerboost.generateRandomBoost();
-                                powerboosts.add(new Powerboost(currAsteroid.getX(), currAsteroid.getY(), 60,
-                                        "./assets/powerboosts/" + randString + ".png", randString));
-                            }
 
+                        }
+
+                        if (destroyedAsteroid >= quota) {
+                            String randString = Powerboost.generateRandomBoost();
+                            powerboosts.add(new Powerboost(currAsteroid.getX(), currAsteroid.getY(), 60,
+                                    "./assets/powerboosts/" + randString + ".png", randString));
+                            destroyedAsteroid -= quota;
                         }
                     }
                 }
+
                 int powerboostSize = powerboosts.size();
                 for (int i = 0; i < powerboostSize; i++) {
                     Powerboost currPowerboost = powerboosts.get(i);
 
                     if (Entity.collides(currPowerboost, player)) {
                         if (currPowerboost.getBoostType() == "reducedCooldown") {
-                            if (intervalBetweenPlayerProjectile < 3) {
-                                intervalBetweenPlayerProjectile = 3;
-                            } else {
-                                intervalBetweenPlayerProjectile -= 1;
+                            if (player.getIntervalBetweenProjectiles() >= 3) {
+                                player.decrementIntervalBetweenProjectiles();
                             }
+
                         } else if (currPowerboost.getBoostType() == "medicine") {
                             player.restoreHealth(80);
                         } else if (currPowerboost.getBoostType() == "increasedDamage") {
                             overallDamage += 0.2;
+                        } else if (currPowerboost.getBoostType() == "increaseBaseProjectileSpeed") {
+                            player.incrementBaseProjectileSpeed();
                         }
 
                         powerboosts.remove(i);
@@ -176,24 +247,43 @@ public class GameEngine extends JPanel implements KeyListener {
 
                 // Check first if projectile is out of bound, then check if the projectiles hit
                 // the asteroids.
-                int playerProjectileSize = playerProjectiles.size();
-                for (int i = 0; i < playerProjectileSize; i++) {
-                    Projectile currProjectile = playerProjectiles.get(i);
+                int projectilesize = projectiles.size();
+                for (int i = 0; i < projectilesize; i++) {
+                    Projectile currProjectile = projectiles.get(i);
                     currProjectile.moveForward();
                     if (currProjectile.getY() < 0) {
-                        playerProjectiles.remove(i);
-                        playerProjectileSize--;
+                        projectiles.remove(i);
+                        projectilesize--;
                         i--;
 
                     } else {
                         for (Asteroid e : asteroids) {
                             if (Entity.collides(e, currProjectile)) {
+                                if (currProjectile.inflictDamage(e)) {
+                                    projectiles.remove(i);
+                                    projectilesize--;
+                                    i--;
+                                }
 
-                                currProjectile.inflictDamage(e);
-                                playerProjectiles.remove(i);
-                                playerProjectileSize--;
+                            }
+                        }
+
+                        for (Ship e : enemyShips) {
+                            if (Entity.collides(e, currProjectile)) {
+                                if (currProjectile.inflictDamage(e)) {
+                                    projectiles.remove(i);
+                                    projectilesize--;
+                                    i--;
+                                }
+
+                            }
+                        }
+
+                        if (Entity.collides(currProjectile, player)) {
+                            if (currProjectile.inflictDamage(player)) {
+                                projectiles.remove(i);
+                                projectilesize--;
                                 i--;
-
                             }
                         }
                     }
@@ -202,7 +292,8 @@ public class GameEngine extends JPanel implements KeyListener {
 
                 timeElapsed++;
                 asteroidTimeLapsed++;
-                playerProjectileCooldown++;
+                enemyShipTimeLapsed++;
+                player.incrementProjectileCooldown();
 
                 try {
                     thread.sleep(10);
@@ -235,7 +326,7 @@ public class GameEngine extends JPanel implements KeyListener {
             g.drawLine((int) player.getX(), (int) player.getY(), (int) (player.getX() + player.getDeltaX() * 9),
                     (int) (player.getY() + player.getDeltaY() * 9));
 
-            for (Projectile projectile : playerProjectiles) {
+            for (Projectile projectile : projectiles) {
                 g.drawImage(projectile.getImgInstance(), (int) (projectile.getX() - projectile.getSize() / 2),
                         (int) (projectile.getY() - projectile.getSize() / 2), null);
             }
@@ -257,6 +348,25 @@ public class GameEngine extends JPanel implements KeyListener {
 
                 g.drawImage(asteroid.getImgInstance(), (int) (asteroid.getX() - asteroid.getSize() / 2),
                         (int) (asteroid.getY() - asteroid.getSize() / 2), null);
+            }
+
+            for (Ship ship : enemyShips) {
+
+                double ratio = ((double) ship.getHealth() / (double) ship.getMaxHealth());
+
+                if (ratio != 1) {
+                    g.setColor(Color.RED);
+                    g.drawRect(ship.getX() - ship.getSize() / 2 + 3,
+                            ship.getY() - ship.getSize() / 2 - 27,
+                            ship.getSize(), 20);
+                    g.setColor(Color.RED);
+                    g.fillRect(ship.getX() - ship.getSize() / 2 + 3,
+                            ship.getY() - ship.getSize() / 2 - 27,
+                            (int) (ship.getSize() * ratio), 20);
+                }
+
+                g.drawImage(ship.getImgInstance(), (int) (ship.getX() - ship.getSize() / 2),
+                        (int) (ship.getY() - ship.getSize() / 2), null);
             }
 
             for (Powerboost powerboost : powerboosts) {
@@ -281,23 +391,29 @@ public class GameEngine extends JPanel implements KeyListener {
 
     };
 
+    public void getPowerboost(String type) {
+
+    }
+
     @Override
     public void keyPressed(KeyEvent e) {
         activeKeys.add(e.getKeyCode());
 
         if (e.getKeyCode() == KeyEvent.VK_ENTER && player.getHealth() == 0) {
-            playerProjectiles.clear();
+            enemyShips.clear();
+            projectiles.clear();
             asteroids.clear();
             powerboosts.clear();
             intervalBetweenAsteroid = 200;
-            intervalBetweenPlayerProjectile = 24;
             asteroidTimeLapsed = 0;
-            playerProjectileCooldown = 0;
+            intervalBetweenEnemeyShips = 750;
+            enemyShipTimeLapsed = 0;
             destroyedAsteroid = 0;
             quota = 4;
             totalScore = 0;
             overallDamage = 1.0;
-            player = new Ship(600, 600, 12, 150, "./assets/ships/player_ship.png", 300);
+            player = new Ship(600, 600, 12, Math.PI / 2, 150, "./assets/ships/player_ship.png", 300, 24, 5, 0,
+                    "player");
         }
     }
 

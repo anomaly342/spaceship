@@ -6,12 +6,13 @@ public class MoveableEntity extends Entity {
     private final int view_distance = 50;
     private double deltaX;
     private double deltaY;
-    private double angle = Math.PI;
-    private int speed;
+    private double angle;
+    private double speed;
 
-    public MoveableEntity(int x, int y, int speed, int size, String url) {
+    public MoveableEntity(int x, int y, double speed, int size, String url, double angle) {
         super(x, y, size, url);
         this.speed = speed;
+        this.angle = angle;
         updateDelta();
     }
 
@@ -36,17 +37,23 @@ public class MoveableEntity extends Entity {
     }
 
     public void moveRight() {
-        this.x = this.x + speed;
+        this.x = (int) (this.x + speed);
     }
 
-    public void moveForward() {
+    public void moveUp() {
 
         this.y -= speed;
 
     }
 
-    public void moveBackward() {
+    public void moveDown() {
         this.y += speed;
+    }
+
+    public void moveForward() {
+
+        this.x = (int) (this.x + this.deltaX * speed);
+        this.y = (int) (this.y + this.deltaY * speed);
     }
 
     public double getViewDistance() {
