@@ -104,7 +104,7 @@ public class GameEngine extends JPanel implements KeyListener {
                                             "enemy"));
                         }
 
-                        intervalBetweenEnemeyShips -= 8;
+                        intervalBetweenEnemeyShips -= 25;
                         if (intervalBetweenEnemeyShips < 40) {
                             intervalBetweenEnemeyShips = 40;
                         }
@@ -122,9 +122,9 @@ public class GameEngine extends JPanel implements KeyListener {
                             asteroids.add(new Asteroid(rand, 50, speed, 90.0, 110,
                                     "./assets/asteroids/asteroid" + rand_index + ".png", 230, 100));
                         }
-                        intervalBetweenAsteroid -= 1;
-                        if (intervalBetweenAsteroid < 12) {
-                            intervalBetweenAsteroid = 12;
+                        intervalBetweenAsteroid -= 2;
+                        if (intervalBetweenAsteroid < 9) {
+                            intervalBetweenAsteroid = 9;
                         }
                         asteroidTimeLapsed = 0;
 
